@@ -3,32 +3,379 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Canvas</title>
-</head>
-<body>
-    <h1>Hello Pixel Canvas</h1>
-    <p>Check the console for Wasm output.</p>
-    <div id="result"></div>
-
-    <script type="module">
-        // Import the init function and the add function from the pkg directory
-        // We use .. because we are in www/ and pkg is in the root
-        import init, { add } from '../pkg/pixel_canvas.js';
-
-        async function run() {
-            // Initialize the Wasm module
-            await init();
-
-            // Call the add function from Rust
-            const result = add(10n, 20n); // Rust u64 expects BigInt in JS for safety or number if it fits, usually BigInt for u64
-            
-            console.log(`Result from Wasm add(10, 20): ${result}`);
-            
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerText = `Result from Wasm add(10, 20): ${result}`;
+    <title>Pixel Canvas - Shared Buffer Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        run();
+        body {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e4e4e7;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d9ff, #7c3aed, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #a1a1aa;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        #refreshBtn {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            color: white;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+        }
+
+        #refreshBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
+        }
+
+        #autoBtn {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
+        }
+
+        #autoBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.6);
+        }
+
+        #autoBtn.active {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #a1a1aa;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00d9ff;
+        }
+
+        .buffer-display {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            overflow: hidden;
+        }
+
+        .buffer-title {
+            font-size: 0.875rem;
+            color: #a1a1aa;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .buffer-title::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .buffer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+            gap: 6px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .buffer-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .buffer-grid::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .buffer-grid::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .byte-cell {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 0.5rem;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .byte-cell::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--color), transparent);
+            opacity: 0.5;
+        }
+
+        .byte-index {
+            font-size: 0.6rem;
+            color: #71717a;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .byte-value {
+            color: var(--color);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #a1a1aa;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #7c3aed;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Shared Buffer Demo</h1>
+        <p class="subtitle">Rust ⟷ JavaScript 共享内存实时展示</p>
+
+        <div class="controls">
+            <button id="refreshBtn">🔄 刷新随机值</button>
+            <button id="autoBtn">▶️ 自动刷新</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Buffer 大小</div>
+                <div class="stat-value" id="bufferSize">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">刷新次数</div>
+                <div class="stat-value" id="refreshCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">最小值</div>
+                <div class="stat-value" id="minValue">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">最大值</div>
+                <div class="stat-value" id="maxValue">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">平均值</div>
+                <div class="stat-value" id="avgValue">-</div>
+            </div>
+        </div>
+
+        <div class="buffer-display">
+            <div class="buffer-title">Buffer 内容 (Uint8)</div>
+            <div class="buffer-grid" id="bufferGrid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 1rem;">正在加载 WASM 模块...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import init, { SharedBuffer } from '../pkg/pixel_canvas.js';
+
+        let sharedBuffer = null;
+        let wasmMemory = null;
+        let bufferView = null;
+        let refreshCount = 0;
+        let autoRefreshInterval = null;
+
+        // 根据值获取颜色
+        function getColorForValue(value) {
+            const hue = (value / 255) * 280; // 从蓝色到紫色的渐变
+            return `hsl(${hue}, 70%, 60%)`;
+        }
+
+        // 更新统计信息
+        function updateStats(data) {
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            const avg = (data.reduce((a, b) => a + b, 0) / data.length).toFixed(1);
+
+            document.getElementById('minValue').textContent = min;
+            document.getElementById('maxValue').textContent = max;
+            document.getElementById('avgValue').textContent = avg;
+        }
+
+        // 渲染 buffer 内容
+        function renderBuffer() {
+            const grid = document.getElementById('bufferGrid');
+            const data = Array.from(bufferView);
+
+            updateStats(data);
+
+            grid.innerHTML = data.map((value, index) => {
+                const color = getColorForValue(value);
+                return `
+                    <div class="byte-cell" style="--color: ${color}">
+                        <span class="byte-index">[${index}]</span>
+                        <span class="byte-value">${value}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 刷新 buffer
+        function refresh() {
+            sharedBuffer.refresh();
+            refreshCount++;
+            document.getElementById('refreshCount').textContent = refreshCount;
+            renderBuffer();
+        }
+
+        // 切换自动刷新
+        function toggleAutoRefresh() {
+            const btn = document.getElementById('autoBtn');
+            
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                btn.textContent = '▶️ 自动刷新';
+                btn.classList.remove('active');
+            } else {
+                autoRefreshInterval = setInterval(refresh, 100);
+                btn.textContent = '⏹️ 停止刷新';
+                btn.classList.add('active');
+            }
+        }
+
+        async function run() {
+            // 初始化 WASM 模块
+            const wasm = await init();
+            wasmMemory = wasm.memory;
+
+            // 创建共享 buffer (64 字节用于演示)
+            const BUFFER_SIZE = 64;
+            sharedBuffer = new SharedBuffer(BUFFER_SIZE);
+
+            // 获取 buffer 的指针和长度
+            const ptr = sharedBuffer.ptr();
+            const len = sharedBuffer.len();
+
+            // 创建一个 Uint8Array 视图，直接指向 WASM 内存
+            // 这就是 JS 和 Rust 共享的同一块内存！
+            bufferView = new Uint8Array(wasmMemory.buffer, ptr, len);
+
+            // 更新 UI
+            document.getElementById('bufferSize').textContent = `${len} bytes`;
+
+            // 绑定事件
+            document.getElementById('refreshBtn').addEventListener('click', refresh);
+            document.getElementById('autoBtn').addEventListener('click', toggleAutoRefresh);
+
+            // 首次刷新
+            refresh();
+
+            console.log('SharedBuffer 已创建');
+            console.log('指针地址:', ptr);
+            console.log('Buffer 长度:', len);
+            console.log('JS 端通过 Uint8Array 直接访问 WASM 内存');
+        }
+
+        run().catch(console.error);
     </script>
 </body>
 </html>
