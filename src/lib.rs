@@ -1,33 +1,11 @@
-use wasm_bindgen::prelude::*;
+//! pixel-canvas - 像素画布 WebAssembly 库
+//!
+//! 提供高性能的图像缓冲区，用于 Rust 和 JavaScript 之间共享内存。
 
-/// SharedBuffer - 一个可以在 Rust 和 JS 之间共享的内存区域
-#[wasm_bindgen]
-pub struct SharedBuffer {
-    buffer: Vec<u8>,
-}
+mod buffer;
+mod effects;
+mod format;
 
-#[wasm_bindgen]
-impl SharedBuffer {
-    /// 创建一个新的 SharedBuffer，分配指定大小的内存
-    #[wasm_bindgen(constructor)]
-    pub fn new(size: usize) -> SharedBuffer {
-        SharedBuffer {
-            buffer: vec![0; size],
-        }
-    }
-
-    /// 返回 buffer 的指针，供 JS 端访问
-    pub fn ptr(&self) -> *const u8 {
-        self.buffer.as_ptr()
-    }
-
-    /// 返回 buffer 的长度
-    pub fn len(&self) -> usize {
-        self.buffer.len()
-    }
-
-    /// 刷新 buffer，填充随机值
-    pub fn refresh(&mut self) {
-        getrandom::getrandom(&mut self.buffer).expect("Failed to generate random bytes");
-    }
-}
+// 导出核心类型
+pub use buffer::SharedBuffer;
+pub use format::ImageFormat;
