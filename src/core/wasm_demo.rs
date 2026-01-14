@@ -4,7 +4,7 @@
 
 use wasm_bindgen::prelude::*;
 
-use crate::format::ImageFormat;
+use super::format::ImageFormat;
 use crate::scene::Scene;
 use crate::scene::sprite::ImageSprite;
 use crate::scene::sprite::Sprite;

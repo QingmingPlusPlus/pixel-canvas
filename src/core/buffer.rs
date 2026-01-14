@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use crate::format::ImageFormat;
+use super::format::ImageFormat;
 
 /// SharedBuffer - 一个可以在 Rust 和 JS 之间共享的内存区域
 #[wasm_bindgen]

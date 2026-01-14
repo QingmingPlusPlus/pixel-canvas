@@ -191,7 +191,7 @@ impl std::fmt::Debug for Scene {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::format::ImageFormat;
+    use crate::core::format::ImageFormat;
     use crate::scene::sprite::ImageSprite;
 
     #[test]

@@ -2,7 +2,7 @@
 //!
 //! 提供精灵 trait 和具体实现
 
-use crate::format::ImageFormat;
+use crate::core::format::ImageFormat;
 use crate::math::{Matrix3x3, MatrixOperations, Transform2D, Vec2};
 
 /// 精灵 trait - 面向接口编程
