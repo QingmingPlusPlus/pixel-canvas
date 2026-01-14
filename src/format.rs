@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 /// 图像格式枚举
 /// 定义支持的图像通道格式
 #[wasm_bindgen]
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ImageFormat {
     /// 灰度图像，单通道
     Grayscale = 1,

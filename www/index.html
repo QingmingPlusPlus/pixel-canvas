@@ -1,160 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Canvas - Shared Buffer Demo</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-            background: #1a1a2e;
-            color: #e4e4e7;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        h1 { margin-bottom: 2rem; color: #00d9ff; }
-        .controls { margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
-        button {
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            cursor: pointer;
-            background: #2d3748;
-            color: white;
-            border: 1px solid #4a5568;
-            border-radius: 8px;
-        }
-        button:hover { background: #4a5568; }
-        button.active { background: #7c3aed; border-color: #9f7aea; }
-        canvas {
-            border: 2px solid #4a5568;
-            background: #000;
-            image-rendering: pixelated; /* 关键：保持像素清晰 */
-        }
-    </style>
+    <title>Pixel Canvas - WASM Shared Buffer Demo</title>
+    <meta name="description" content="高性能 WebAssembly 像素画布演示，支持 Rust 与 JavaScript 之间的零拷贝内存共享">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
     <h1>🎨 WASM Pixel Canvas</h1>
 
-    <div class="controls">
-        <button onclick="setFormat(4)" id="btnRgba" class="active">RGBA (Zero Copy)</button>
-        <button onclick="setFormat(3)" id="btnRgb">RGB</button>
-        <button onclick="setFormat(1)" id="btnGray">Grayscale</button>
+    <!-- 格式选择 -->
+    <section class="controls-section">
+        <h2>📊 Buffer Format</h2>
+        <div class="controls">
+            <button id="btnRgba" class="active">RGBA (Zero Copy)</button>
+            <button id="btnRgb">RGB</button>
+            <button id="btnGray">Grayscale</button>
+        </div>
+    </section>
+
+    <!-- 颜色选择器 -->
+    <section class="controls-section">
+        <h2>🎨 Gradient Colors</h2>
+        <div class="controls">
+            <div class="color-group">
+                <label for="startColor">Start</label>
+                <input type="color" id="startColor" value="#ff0000">
+            </div>
+            <div class="color-group">
+                <label for="endColor">End</label>
+                <input type="color" id="endColor" value="#0000ff">
+            </div>
+            <button id="runTest">▶️ Run Gradient</button>
+        </div>
+    </section>
+
+    <!-- Canvas 渲染区 -->
+    <div class="canvas-container">
+        <canvas id="canvas" width="400" height="300"></canvas>
     </div>
-    
-    <div class="controls">
-        <button onclick="runTest()">🧪 Run Gradient Test</button>
-    </div>
 
-    <canvas id="canvas" width="400" height="300"></canvas>
+    <!-- 信息展示 -->
+    <div id="info" class="info"></div>
 
-    <script type="module">
-        import init, { SharedBuffer, ImageFormat } from '../pkg/pixel_canvas.js';
-
-        let wasm = null;
-        let sharedBuffer = null;
-        let pFormat = 4; // Default RGBA
-        
-        async function initialize() {
-            wasm = await init();
-            // Default load
-            resetBuffer(pFormat);
-        }
-
-        window.setFormat = (fmt) => {
-            pFormat = fmt;
-            
-            // UI Update
-            document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-            if(fmt === 4) document.getElementById('btnRgba').classList.add('active');
-            if(fmt === 3) document.getElementById('btnRgb').classList.add('active');
-            if(fmt === 1) document.getElementById('btnGray').classList.add('active');
-
-            resetBuffer(fmt);
-        };
-
-        function resetBuffer(format) {
-            const width = 400;
-            const height = 300;
-            
-            if (sharedBuffer) {
-                // Free old buffer if needed? Rust WASM usually handles memory within the instance, 
-                // but explicit free method is good if we generated many.
-                // For this demo, we just create a new one, old one collected by GC wrapper.
-            }
-
-            // Create new buffer in Rust
-            sharedBuffer = new SharedBuffer(width, height, format);
-            
-            // Clear canvas
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, width, height);
-        }
-
-        window.runTest = () => {
-            if (!sharedBuffer) return;
-
-            // Run Rust gradient logic
-            // Colors: Start Red (0xFF0000FF), End Blue (0x0000FFFF)
-            sharedBuffer.test_gradient(0xFF0000FF, 0x0000FFFF);
-
-            render();
-        };
-
-        function render() {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            const width = canvas.width;
-            const height = canvas.height;
-
-            const ptr = sharedBuffer.ptr();
-            const len = sharedBuffer.len();
-            const memory = wasm.memory.buffer;
-
-            // Direct Rust Buffer View
-            const rustSubBuffer = new Uint8Array(memory, ptr, len);
-
-            if (pFormat === 4) {
-                // RGBA - ZERO COPY (Fast Path)
-                // We must use Uint8ClampedArray for ImageData
-                const clampedArray = new Uint8ClampedArray(memory, ptr, len);
-                const imageData = new ImageData(clampedArray, width, height);
-                ctx.putImageData(imageData, 0, 0);
-                console.log("Rendered RGBA Direct");
-            } else if (pFormat === 3) {
-                // RGB - Expansion needed
-                const imageData = ctx.createImageData(width, height);
-                const data = imageData.data;
-                
-                for (let i = 0, j = 0; i < len; i += 3, j += 4) {
-                    data[j] = rustSubBuffer[i];     // R
-                    data[j+1] = rustSubBuffer[i+1]; // G
-                    data[j+2] = rustSubBuffer[i+2]; // B
-                    data[j+3] = 255;                // A
-                }
-                ctx.putImageData(imageData, 0, 0);
-                console.log("Rendered RGB Expanded");
-            } else if (pFormat === 1) {
-                // Grayscale - Expansion needed
-                const imageData = ctx.createImageData(width, height);
-                const data = imageData.data;
-                
-                for (let i = 0, j = 0; i < len; i++, j += 4) {
-                    const val = rustSubBuffer[i];
-                    data[j] = val;   // R
-                    data[j+1] = val; // G
-                    data[j+2] = val; // B
-                    data[j+3] = 255; // A
-                }
-                ctx.putImageData(imageData, 0, 0);
-                console.log("Rendered Grayscale Expanded");
-            }
-        }
-
-        initialize();
-    </script>
+    <!-- 主应用脚本 -->
+    <script type="module" src="js/main.js"></script>
 </body>
+
 </html>

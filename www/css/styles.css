@@ -1,0 +1,180 @@
+/* CSS Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Color Palette */
+    --bg-primary: #0f0f1a;
+    --bg-secondary: #1a1a2e;
+    --bg-card: #16213e;
+    --border-color: #4a5568;
+    --text-primary: #e4e4e7;
+    --text-secondary: #a1a1aa;
+    --accent-cyan: #00d9ff;
+    --accent-purple: #7c3aed;
+    --accent-purple-light: #9f7aea;
+    --button-bg: #2d3748;
+    --button-hover: #4a5568;
+    
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+}
+
+body {
+    font-family: 'Inter', 'SF Mono', 'Monaco', 'Consolas', monospace;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Typography */
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+h2 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+/* Controls Container */
+.controls-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    max-width: 600px;
+}
+
+.controls {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Buttons */
+button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--button-bg);
+    color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all var(--transition-fast);
+}
+
+button:hover {
+    background: var(--button-hover);
+    border-color: var(--accent-purple-light);
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button.active {
+    background: var(--accent-purple);
+    border-color: var(--accent-purple-light);
+    box-shadow: 0 0 15px rgba(124, 58, 237, 0.4);
+}
+
+/* Color Picker Group */
+.color-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.color-group label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    min-width: 60px;
+}
+
+input[type="color"] {
+    width: 50px;
+    height: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--button-bg);
+    cursor: pointer;
+    padding: 4px;
+}
+
+input[type="color"]:hover {
+    border-color: var(--accent-purple-light);
+}
+
+/* Canvas */
+.canvas-container {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 
+        0 4px 6px rgba(0, 0, 0, 0.3),
+        0 0 40px rgba(0, 217, 255, 0.1);
+}
+
+canvas {
+    display: block;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    background: #000;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* Info Display */
+.info {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.info-highlight {
+    color: var(--accent-cyan);
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    body {
+        padding: 1rem;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    .controls-section {
+        padding: 1rem;
+    }
+    
+    button {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+}

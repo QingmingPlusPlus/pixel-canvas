@@ -5,7 +5,11 @@
 mod buffer;
 mod effects;
 mod format;
+pub mod math;
+pub mod scene;
 
 // 导出核心类型
 pub use buffer::SharedBuffer;
 pub use format::ImageFormat;
+pub use math::{Matrix3x3, MatrixOperations, Transform2D, Vec2};
+pub use scene::{ImageSprite, Scene, Sprite};
