@@ -5,8 +5,6 @@
 import {
     initWasm,
     createBuffer,
-    renderBufferToCanvas,
-    hexToPackedRGBA,
     FORMAT,
 } from './wasm-utils.js';
 
@@ -14,8 +12,6 @@ import {
 const state = {
     buffer: null,
     format: FORMAT.RGBA,
-    startColor: '#ff0000',
-    endColor: '#0000ff',
     canvasWidth: 400,
     canvasHeight: 300,
 };
@@ -24,9 +20,6 @@ const state = {
 const elements = {
     canvas: null,
     formatButtons: {},
-    startColorInput: null,
-    endColorInput: null,
-    runTestButton: null,
     infoDisplay: null,
 };
 
@@ -39,9 +32,6 @@ async function initialize() {
         [FORMAT.RGB]: document.getElementById('btnRgb'),
         [FORMAT.GRAYSCALE]: document.getElementById('btnGray'),
     };
-    elements.startColorInput = document.getElementById('startColor');
-    elements.endColorInput = document.getElementById('endColor');
-    elements.runTestButton = document.getElementById('runTest');
     elements.infoDisplay = document.getElementById('info');
 
     // 初始化 WASM
@@ -82,22 +72,7 @@ function setFormat(format) {
     updateInfo();
 }
 
-// ============ 渐变测试 ============
-function runGradientTest() {
-    if (!state.buffer) return;
 
-    // 获取颜色并转换为 packed RGBA
-    const startPacked = hexToPackedRGBA(state.startColor);
-    const endPacked = hexToPackedRGBA(state.endColor);
-
-    // 调用 Rust 生成渐变
-    state.buffer.test_gradient(startPacked, endPacked);
-
-    // 渲染到 canvas
-    renderBufferToCanvas(state.buffer, elements.canvas, state.format);
-
-    console.log(`🎨 Rendered gradient: ${state.startColor} → ${state.endColor}`);
-}
 
 // ============ 事件绑定 ============
 function bindEvents() {
@@ -106,16 +81,7 @@ function bindEvents() {
     elements.formatButtons[FORMAT.RGB].addEventListener('click', () => setFormat(FORMAT.RGB));
     elements.formatButtons[FORMAT.GRAYSCALE].addEventListener('click', () => setFormat(FORMAT.GRAYSCALE));
 
-    // 运行测试按钮
-    elements.runTestButton.addEventListener('click', runGradientTest);
 
-    // 颜色选择器
-    elements.startColorInput.addEventListener('input', (e) => {
-        state.startColor = e.target.value;
-    });
-    elements.endColorInput.addEventListener('input', (e) => {
-        state.endColor = e.target.value;
-    });
 }
 
 // ============ 信息展示 ============
