@@ -9,6 +9,5 @@ pub mod scene;
 // 导出核心类型
 pub use core::ImageFormat;
 pub use core::SharedBuffer;
-pub use core::WasmScene;
 pub use math::{Matrix3x3, MatrixOperations, Transform2D, Vec2};
 pub use scene::{ImageSprite, Scene, Sprite};
