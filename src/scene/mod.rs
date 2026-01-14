@@ -4,6 +4,8 @@
 
 mod scene;
 pub mod sprite;
+mod wasm;
 
 pub use scene::Scene;
 pub use sprite::{ImageSprite, Sprite};
+pub use wasm::WasmScene;

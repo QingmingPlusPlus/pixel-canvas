@@ -186,6 +186,54 @@ impl ImageSprite {
         self
     }
 
+    /// 创建长方形精灵
+    ///
+    /// 创建一个填充指定颜色的长方形精灵
+    ///
+    /// # Arguments
+    /// * `width` - 长方形宽度
+    /// * `height` - 长方形高度
+    /// * `r` - 红色分量 (0-255)
+    /// * `g` - 绿色分量 (0-255)
+    /// * `b` - 蓝色分量 (0-255)
+    /// * `a` - 透明度分量 (0-255)
+    pub fn create_rectangle(width: u32, height: u32, r: u8, g: u8, b: u8, a: u8) -> Self {
+        let size = (width * height * 4) as usize;
+        let mut buffer = vec![0u8; size];
+
+        // 填充颜色
+        for i in (0..size).step_by(4) {
+            buffer[i] = r;
+            buffer[i + 1] = g;
+            buffer[i + 2] = b;
+            buffer[i + 3] = a;
+        }
+
+        Self {
+            id: generate_sprite_id(),
+            buffer,
+            width,
+            height,
+            format: ImageFormat::Rgba,
+            transform: Transform2D::new(),
+            z_order: 0,
+        }
+    }
+
+    /// 创建长方形精灵（十六进制颜色）
+    ///
+    /// # Arguments
+    /// * `width` - 长方形宽度
+    /// * `height` - 长方形高度
+    /// * `color` - 颜色值 (0xRRGGBBAA)
+    pub fn create_rectangle_hex(width: u32, height: u32, color: u32) -> Self {
+        let r = ((color >> 24) & 0xFF) as u8;
+        let g = ((color >> 16) & 0xFF) as u8;
+        let b = ((color >> 8) & 0xFF) as u8;
+        let a = (color & 0xFF) as u8;
+        Self::create_rectangle(width, height, r, g, b, a)
+    }
+
     /// 获取指定位置的像素（转换为 RGBA）
     fn get_pixel_rgba(&self, x: u32, y: u32) -> [u8; 4] {
         let idx = (y * self.width + x) as usize;

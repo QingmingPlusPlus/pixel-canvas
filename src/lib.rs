@@ -10,4 +10,4 @@ pub mod scene;
 pub use core::ImageFormat;
 pub use core::SharedBuffer;
 pub use math::{Matrix3x3, MatrixOperations, Transform2D, Vec2};
-pub use scene::{ImageSprite, Scene, Sprite};
+pub use scene::{ImageSprite, Scene, Sprite, WasmScene};

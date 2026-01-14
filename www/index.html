@@ -4,21 +4,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Canvas - WASM Shared Buffer Demo</title>
-    <meta name="description" content="高性能 WebAssembly 像素画布演示，支持 Rust 与 JavaScript 之间的零拷贝内存共享">
+    <title>Pixel Canvas - Sprite Transform Demo</title>
+    <meta name="description" content="WebAssembly 精灵变换演示，支持平移、旋转、缩放等矩阵变换操作">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
-    <h1>🎨 WASM Pixel Canvas</h1>
+    <h1>🎨 Sprite Transform Demo</h1>
 
-    <!-- 格式选择 -->
+    <!-- 变换控制 -->
     <section class="controls-section">
-        <h2>📊 Buffer Format</h2>
+        <h2>🔄 平移 (Translate)</h2>
         <div class="controls">
-            <button id="btnRgba" class="active">RGBA (Zero Copy)</button>
-            <button id="btnRgb">RGB</button>
-            <button id="btnGray">Grayscale</button>
+            <button id="btnLeft">⬅️ 左移</button>
+            <button id="btnRight">➡️ 右移</button>
+            <button id="btnUp">⬆️ 上移</button>
+            <button id="btnDown">⬇️ 下移</button>
+        </div>
+    </section>
+
+    <section class="controls-section">
+        <h2>🔃 旋转 (Rotate)</h2>
+        <div class="controls">
+            <button id="btnRotateLeft">↺ 逆时针 15°</button>
+            <button id="btnRotateRight">↻ 顺时针 15°</button>
+        </div>
+    </section>
+
+    <section class="controls-section">
+        <h2>🔍 缩放 (Scale)</h2>
+        <div class="controls">
+            <button id="btnScaleUp">➕ 放大</button>
+            <button id="btnScaleDown">➖ 缩小</button>
+            <button id="btnScaleX">↔️ X轴缩放</button>
+            <button id="btnScaleY">↕️ Y轴缩放</button>
+        </div>
+    </section>
+
+    <section class="controls-section">
+        <h2>⚙️ 其他操作</h2>
+        <div class="controls">
+            <button id="btnReset" class="active">🔄 重置变换</button>
+            <button id="btnAnchorCenter">📍 中心锚点</button>
+            <button id="btnAnchorCorner">📍 左上锚点</button>
         </div>
     </section>
 
